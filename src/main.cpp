@@ -4,8 +4,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sstream>
+#include <fstream>
+#include <ctime>
 #include <unordered_map>
 #include <stdexcept>
+
+using status_code = std::uint32_t;
 
 int QUEUE_LENGTH = 10;
 
@@ -86,31 +90,85 @@ private:
 
 class http_response {
 public:
-
+    http_response(const http_request &request) {
+        build_response(request);
+    }
 private:
     class status_line {
     public:
-        status_line(const std::string protocol_version, const std::string status_code, const std::string status_message)
-        : protocol_version(protocol_version), status_code(status_code), status_message(status_message) {};
+        status_line(const std::string &protocol_version, status_code code, const std::string &status_message)
+        : protocol_version(protocol_version), code(code), status_message(status_message) {};
 
         const std::string& get_protocol_version() const {
             return protocol_version;
         }
-        const std::string& get_status_code() const {
-            return status_code;
+        status_code get_status_code() const {
+            return code;
         }
         const std::string& get_status_message() const {
             return status_message;
         }
     private:
         std::string protocol_version;
-        std::string status_code;
+        status_code code;
         std::string status_message;
     };
 
-    status_line response_status_line;
+    status_line *response_status_line;
     std::unordered_map<std::string, std::string> headers;
-    char* body;
+    std::string body;
+
+    void build_response(const http_request &request) {
+        if (request.get_method() == http_method::GET) {
+            std::string file_path = "files" + request.get_url();
+            const std::string data = read_file(file_path);
+            build_success_response(request, 200, data);
+        }
+    }
+
+   const std::string read_file(const std::string& path) {
+        std::ostringstream buffer;
+        std::ifstream input_file(path);
+
+        if (!input_file.is_open()) {
+            std::cerr << "Could not open the file - '" << path << "'" << std::endl;
+            throw std::runtime_error("Could not open the file - '" + path + "'");
+        }
+
+        buffer << input_file.rdbuf();
+        return buffer.str();
+    }
+
+    std::string get_status_message(status_code code) {
+        // TODO - implement more messages dependent on code
+        if (code == 200) {
+            return "OK";
+        }
+        throw std::runtime_error("Status code not implemented");
+    }
+
+    void build_success_response(const http_request & request, status_code code, const std::string &data) {
+        response_status_line = new status_line("HTTP/1.1", code, get_status_message(code));
+        body = data;
+        build_header_lines();
+    }
+
+    // This function assumes caller has set the body beforehand and the function body is a null
+    void build_header_lines() {
+        // TODO - include a last modified header line.
+        headers["Connection"] = "close";
+        headers["Content-Type"] = "text/html";
+        headers["Content-Length"] = std::to_string(body.length());
+
+        // Store date as RFC 1123 format
+        char date_buffer[40];
+        time_t now = time(nullptr);
+        struct tm tm = *gmtime(&now);
+        strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S GMT", &tm);
+        headers["Date"] = std::string(date_buffer);
+    }
+
+    void build_error_response(const http_request &request, status_code code, const std::string &error_message);
 };
 
 int get_port_number(int sockfd) {
@@ -172,6 +230,7 @@ void handle_request(int connection_fd) {
     buffer[bytes_received] = '\0';
     std::string request_str(buffer);
     http_request request(request_str);
+    http_response response(request);
     std::cout << request_str << std::endl;
 }
 
