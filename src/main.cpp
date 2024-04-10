@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 using status_code = std::uint32_t;
+namespace fs = std::filesystem;
 
 int QUEUE_LENGTH = 10;
 
@@ -23,10 +24,6 @@ private:
     int connectionfd;
 };
 
-enum class http_method {
-    GET // only insert GET for now, integrate support for other methods later
-};
-
 class http_request {
 public:
     http_request(const std::string &raw_request) {
@@ -36,19 +33,19 @@ public:
     const std::unordered_map<std::string, std::string>& get_headers() const {
         return headers;
     }
-    const http_method get_method() const {
+    std::string get_method() const {
         return method;
     }
-    const std::string& get_url() const {
+    std::string get_url() const {
         return url;
     }
-    const std::string& get_http_version() const {
+    std::string get_http_version() const {
         return protocol_version;
     }
 
 private:
     std::unordered_map<std::string, std::string> headers;
-    http_method method;
+    std::string method;
     std::string url;
     std::string protocol_version;
 
@@ -76,36 +73,53 @@ private:
     void parse_request_line(const std::string& request_line) {
         std::istringstream line_stream(request_line);
         std::string method_str;
-        line_stream >> method_str;
-        method = parse_method(method_str);
+        line_stream >> method;
         line_stream >> url;
         line_stream >> protocol_version;
-    }
-
-    http_method parse_method(const std::string& method_str) {
-        if (method_str == "GET") return http_method::GET;
-        throw std::runtime_error("Unsupported method type");
     }
 };
 
 class http_response {
 public:
     http_response(const http_request &request) {
-        build_response(request);
+        try {
+            init(request);
+        } catch (std::runtime_error &e) {
+            build_response(500, "Unknown server error");
+        }
     }
+
+    std::string to_string() const {
+        std::ostringstream resp_stream;
+        resp_stream << response_status_line->to_string() << "\r\n";
+        for (const auto& header : headers) {
+            resp_stream << header.first << ": " << header.second << "\r\n";
+        }
+        resp_stream << "\r\n" << body;
+        return  resp_stream.str();
+    }
+
 private:
     class status_line {
     public:
         status_line(const std::string &protocol_version, status_code code, const std::string &status_message)
         : protocol_version(protocol_version), code(code), status_message(status_message) {};
 
-        const std::string& get_protocol_version() const {
+        std::string to_string() const {
+            std::ostringstream resp_stream;
+            resp_stream << get_protocol_version() << " "
+                        << get_status_code() << " "
+                        << get_status_message();
+            return resp_stream.str();
+        }
+
+        std::string get_protocol_version() const {
             return protocol_version;
         }
         status_code get_status_code() const {
             return code;
         }
-        const std::string& get_status_message() const {
+        std::string get_status_message() const {
             return status_message;
         }
     private:
@@ -118,15 +132,23 @@ private:
     std::unordered_map<std::string, std::string> headers;
     std::string body;
 
-    void build_response(const http_request &request) {
-        if (request.get_method() == http_method::GET) {
+    void init(const http_request &request) {
+        if (request.get_method() == "GET") {
             std::string file_path = "files" + request.get_url();
-            const std::string data = read_file(file_path);
-            build_success_response(request, 200, data);
+            std::string data;
+            try {
+                data = read_file(file_path);
+            } catch (std::runtime_error &e) {
+                build_response(404, request.get_url() + " Not Found");
+                return;
+            }
+            build_response(200, data);
+            return;
         }
+        build_response(400, "Request " + request.get_method() + " not supported");
     }
 
-   const std::string read_file(const std::string& path) {
+   std::string read_file(const std::string& path) {
         std::ostringstream buffer;
         std::ifstream input_file(path);
 
@@ -140,14 +162,20 @@ private:
     }
 
     std::string get_status_message(status_code code) {
-        // TODO - implement more messages dependent on code
+        // TODO - implement more messages dependent on status code
         if (code == 200) {
             return "OK";
+        } else if (code == 400) {
+            return "Bad Request";
+        } else if (code == 404) {
+            return "Not Found";
+        } else if (code == 500) {
+            return "Internal Server Error";
         }
         throw std::runtime_error("Status code not implemented");
     }
 
-    void build_success_response(const http_request & request, status_code code, const std::string &data) {
+    void build_response(status_code code, const std::string &data) {
         response_status_line = new status_line("HTTP/1.1", code, get_status_message(code));
         body = data;
         build_header_lines();
@@ -158,6 +186,7 @@ private:
         // TODO - include a last modified header line.
         headers["Connection"] = "close";
         headers["Content-Type"] = "text/html";
+        headers["Server"] = "TheNewApache/3.14"; // Arbitrary server name
         headers["Content-Length"] = std::to_string(body.length());
 
         // Store date as RFC 1123 format
@@ -167,8 +196,6 @@ private:
         strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S GMT", &tm);
         headers["Date"] = std::string(date_buffer);
     }
-
-    void build_error_response(const http_request &request, status_code code, const std::string &error_message);
 };
 
 int get_port_number(int sockfd) {
@@ -221,6 +248,7 @@ void log_client_connection(const struct sockaddr_in &client_addr) {
 
 void handle_request(int connection_fd) {
     raii_connection conn = raii_connection(connection_fd);
+
     char buffer[4096];
     ssize_t bytes_received = recv(connection_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes_received < 0) {
@@ -228,10 +256,19 @@ void handle_request(int connection_fd) {
         return;
     }
     buffer[bytes_received] = '\0';
+
     std::string request_str(buffer);
     http_request request(request_str);
     http_response response(request);
-    std::cout << request_str << std::endl;
+
+    std::string resp_str = response.to_string();
+    uint64_t resp_size = resp_str.size();
+    const char *resp = resp_str.c_str();
+    ssize_t bytes_sent = 0;
+    do {
+        bytes_sent += send(connection_fd, resp + bytes_sent, resp_size - bytes_sent,
+                           MSG_NOSIGNAL);
+    } while (bytes_sent < resp_size);
 }
 
 int main() {
@@ -240,7 +277,7 @@ int main() {
     try {
         sock_fd = create_socket(desired_port);
     } catch (std::runtime_error &e) {
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 
