@@ -48,7 +48,7 @@ socket_file_descriptor server::create_socket(port_number port) {
     }
 
     // Allow the socket address to be reused in case server is restarted
-    uint8_t yesval = 1;
+    int yesval = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yesval, sizeof(yesval)) == -1) {
         throw std::runtime_error("Error setting socket option SO_REUSEADDR");
     }
