@@ -1,5 +1,18 @@
 # ninja log v5
-490	539	1712709990648849376	WebServer	5c6febf33dfd9a8d
-0	345	1709912654106872188	CMakeFiles/WebServer.dir/main.cpp.o	7c2776afe2511d7d
+1	86	1713364567017508388	build.ninja	72c5ca68e22f0f63
 2	490	1712709990598207548	CMakeFiles/WebServer.dir/src/main.cpp.o	b2ab5e65b3e83787
-1	86	1713360257702373668	build.ninja	72c5ca68e22f0f63
+0	345	1709912654106872188	CMakeFiles/WebServer.dir/main.cpp.o	7c2776afe2511d7d
+490	539	1712709990648849376	WebServer	5c6febf33dfd9a8d
+0	85	1713364567017508388	build.ninja	72c5ca68e22f0f63
+2	448	1713364567474051218	CMakeFiles/WebServer.dir/src/main.cpp.o	b2ab5e65b3e83787
+2	456	1713364567482988791	CMakeFiles/WebServer.dir/src/http_request.cpp.o	ffac8c39b7680172
+3	470	1713364567497078609	CMakeFiles/WebServer.dir/src/server.cpp.o	1fea0469181f10fd
+3	511	1713364567537557731	CMakeFiles/WebServer.dir/src/http_response.cpp.o	96a9e51dc003b462
+3	442	1713364813102688424	CMakeFiles/WebServer.dir/src/main.cpp.o	b2ab5e65b3e83787
+3	465	1713364813125719577	CMakeFiles/WebServer.dir/src/server.cpp.o	1fea0469181f10fd
+465	520	1713364813182220974	WebServer	c09fb8e2543a289e
+2	361	1713364831623428380	CMakeFiles/WebServer.dir/src/main.cpp.o	b2ab5e65b3e83787
+2	384	1713364831645303925	CMakeFiles/WebServer.dir/src/server.cpp.o	1fea0469181f10fd
+3	357	1713364864797382176	CMakeFiles/WebServer.dir/src/main.cpp.o	b2ab5e65b3e83787
+3	379	1713364864819983725	CMakeFiles/WebServer.dir/src/server.cpp.o	1fea0469181f10fd
+379	437	1713364864878521893	WebServer	c09fb8e2543a289e

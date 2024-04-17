@@ -8,5 +8,7 @@
 #include <cstdint>
 
 using status_code = std::uint32_t;
+using socket_file_descriptor = std::int32_t;
+using port_number = std::uint16_t;
 
 #endif
