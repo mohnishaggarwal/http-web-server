@@ -49,7 +49,9 @@
 			},
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				4,
+				5
 			]
 		}
 	],
@@ -82,7 +84,9 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				4,
+				5
 			]
 		},
 		{
@@ -117,6 +121,18 @@
 			"backtrace" : 1,
 			"path" : "src/http_response.h",
 			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/http_request.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/http_response.cpp",
+			"sourceGroupIndex" : 0
 		}
 	],
 	"type" : "EXECUTABLE"
