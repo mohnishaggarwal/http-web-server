@@ -1,6 +1,6 @@
 # Simple C++ Web Server
 
-This is a simple, lightweight web server written in C++, capable of handling HTTP GET requests. The server listens on port 80 and serves static content. It includes error handling for non-existent files by returning a 404 error.
+This is a simple, lightweight web server written in C++, capable of handling HTTP GET requests. The server listens on port 80 and serves static content. It includes  basic error handling and is designed robustly for adding in more complex error handling.
 
 ## Features
 
