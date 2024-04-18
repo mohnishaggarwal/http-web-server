@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <cstring>
+#include <thread>
 
 #include "usings.h"
 #include "http_request.h"
@@ -33,7 +35,7 @@ private:
     port_number get_port(int sockfd);
     socket_file_descriptor create_socket(port_number port);
     void log_client_connection(const struct sockaddr_in &client_addr);
-    void handle_request(socket_file_descriptor connection_fd);
+    static void handle_request(socket_file_descriptor connection_fd);
 };
 
 #endif

@@ -23,7 +23,7 @@ std::string http_response::to_string() const {
 
 void http_response::init(const http_request &request) {
     if (request.get_method() == "GET") {
-        std::string file_path = "files" + request.get_url();
+        std::string file_path = "public/content" + request.get_url();
         std::string data;
         try {
             data = read_file(file_path);

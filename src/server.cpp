@@ -27,7 +27,8 @@ void server::start_server() {
             continue;
         }
         log_client_connection(client_addr);
-        handle_request(client_fd);
+        std::thread req_thread(handle_request, client_fd);
+        req_thread.detach();
     }
 }
 
