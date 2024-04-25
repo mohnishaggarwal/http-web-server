@@ -20,6 +20,7 @@ private:
     class status_line {
     public:
         status_line(const std::string &protocol_version, status_code code, const std::string &status_message);
+        status_line();
         std::string to_string() const;
         std::string get_protocol_version() const;
         status_code get_status_code() const;
@@ -31,7 +32,7 @@ private:
         std::string status_message;
     };
 
-    status_line *response_status_line;
+    status_line response_status_line;
     std::unordered_map<std::string, std::string> headers;
     std::string body;
 

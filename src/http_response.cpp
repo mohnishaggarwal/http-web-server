@@ -11,9 +11,11 @@ http_response::http_response(const http_request &request) {
         build_response(500, "Unknown server error");
     }
 }
+
+
 std::string http_response::to_string() const {
     std::ostringstream resp_stream;
-    resp_stream << response_status_line->to_string() << "\r\n";
+    resp_stream << response_status_line.to_string() << "\r\n";
     for (const auto& header : headers) {
         resp_stream << header.first << ": " << header.second << "\r\n";
     }
@@ -65,7 +67,7 @@ std::string http_response::get_status_message(status_code code) {
 }
 
 void http_response::build_response(status_code code, const std::string &data) {
-    response_status_line = new status_line("HTTP/1.1", code, get_status_message(code));
+    response_status_line = status_line("HTTP/1.0", code, get_status_message(code));
     body = data;
     build_header_lines();
 }
@@ -87,6 +89,8 @@ void http_response::build_header_lines() {
 
 http_response::status_line::status_line(const std::string &protocol_version, status_code code,
                                         const std::string &status_message): protocol_version(protocol_version), code(code), status_message(status_message) {};
+
+http_response::status_line::status_line() : protocol_version(""), code(0), status_message("") {};
 
 std::string http_response::status_line::to_string() const {
     std::ostringstream resp_stream;
